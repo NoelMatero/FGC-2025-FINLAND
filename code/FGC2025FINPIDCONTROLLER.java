@@ -43,7 +43,7 @@ public class FGC2025FINPIDCONTROLLER {
         this.kI = kI;
         this.kD = kD;
     }
-    
+
     // https://en.wikipedia.org/wiki/Proportional%E2%80%93integral%E2%80%93derivative_controller#Control_loop_example
     // tost linkist näkee tän matikan
     public double calculate(double target, double current) {
@@ -51,12 +51,12 @@ public class FGC2025FINPIDCONTROLLER {
         double error = target - current;
         // jos alle tämä niin antaa olla
         double minError = 150.0;
-        
+
         if (Math.abs(error) < minError) {
             return 0;
         }
         double currentTime = System.nanoTime() / 1e9;
-        // dt - ajan erotus 
+        // dt - ajan erotus
         double dt = currentTime - lastTimestamp;
         if (lastTimestamp == 0) dt = 0;
 
@@ -69,7 +69,7 @@ public class FGC2025FINPIDCONTROLLER {
 
         lastError = error;
         lastTimestamp = currentTime;
-        
+
         if (Math.abs(error) <= 500) {
             output /= 5.0;
         }
