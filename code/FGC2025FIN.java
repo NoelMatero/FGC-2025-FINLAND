@@ -44,6 +44,16 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.FGC2025FINPIDCONTROLLER;
+
+enum ClimberState {
+    IDLE,
+    MANUAL_UP,
+    MANUAL_DOWN,
+    HOLD_POSITION,
+    CALIBRATING,
+    AUTOMATIC_CLIMB
+}
+
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
  * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
@@ -61,10 +71,10 @@ import org.firstinspires.ftc.teamcode.FGC2025FINPIDCONTROLLER;
 
 public class FGC2025FIN extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
-    
+
     private static final int TICKS_PER_REV = 560;
     private static final double DEGREES_PER_TICK = 360.0 / TICKS_PER_REV;
-    
+
     private FGC2025FINPIDCONTROLLER climberPID = new FGC2025FINPIDCONTROLLER(0.0025, 0.000002, 0.001);
 
     private DcMotor leftDrive = null;
@@ -74,12 +84,12 @@ public class FGC2025FIN extends LinearOpMode {
     private DcMotor accelerator = null;
     private Servo servo1 = null;
     private Servo servo2 = null;
-    
+
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
-        
+
         waitForStart();
 
         // Initialize the hardware variables. Note that the strings used here as parameters
@@ -91,41 +101,43 @@ public class FGC2025FIN extends LinearOpMode {
         climber = hardwareMap.get(DcMotor.class, "climber");
         accelerator = hardwareMap.get(DcMotor.class, "accelerator");
 
-       
+
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
         leftDrive.setDirection(DcMotor.Direction.FORWARD);
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
-        
+
         climber.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         climber.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        
- 
+
+
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
-        
+
         double last_angle = -1.0;
         boolean climbed = false;
-        boolean holdPosition = false;  
+        boolean holdPosition = false;
         boolean calibrate = false;
         boolean automatic_climb = false;
         double target = 0.0;
-        
+
         double curLeftPower = 0.0;
         double curRightPower = 0.0;
 
         // pienempi nii hitaampi
         double wheelNopeutus = 0.0085;
-        
+
         double lastClimberAngle = 0.0;
         double lastClimberTime = 0.0;
         double Timer2 = 0.0;
         boolean Stalled = false;
 
-        double STALL_ANGLE_THRESHOLD = 2.0;   
-        double STALL_TIME_THRESHOLD = 0.5;    
-        
+        double STALL_ANGLE_CHANGE = 2.0;
+        double STALL_TIME_CHANGE = 0.5;
+
+        ClimberState climberState = ClimberState.IDLE;
+
         while (opModeIsActive()) {
 
             // Setup a variable for each drive wheel to save power level for telemetry
@@ -134,19 +146,19 @@ public class FGC2025FIN extends LinearOpMode {
             double collect_balls1Power;
             double climber_power = 0.0;
             double accelerator_power = 0.0;
-        
+
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
 
             // POV Mode uses left stick to go forward, and right stick to turn.
             // - This uses basic math to combine motions and is easier to drive straight.
-        
+
             double drive = gamepad1.left_stick_y;
             double turn  =  gamepad1.right_stick_x;
-            
+
             leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
             rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
-            
+
             curLeftPower += Range.clip(leftPower - curLeftPower, -wheelNopeutus, wheelNopeutus);
             curRightPower += Range.clip(rightPower - curRightPower, -wheelNopeutus, wheelNopeutus);
 
@@ -157,29 +169,38 @@ public class FGC2025FIN extends LinearOpMode {
             collect_balls1Power = Range.clip(gamepad2.right_trigger-gamepad2.left_trigger, -1.0, 1.0);
             if (gamepad2.right_bumper) {collect_balls1Power = 0.3;}
             else if (gamepad2.left_bumper) {collect_balls1Power = -0.3;}
-            
+
             int currentPosition = climber.getCurrentPosition();
             double angle = currentPosition * DEGREES_PER_TICK;
-            
+
             if (gamepad2.y) {
                 climber_power = 1;
                 climbed = true;
                 holdPosition = false;
+                calibrate = false;
+                climberState = ClimberState.MANUAL_UP;
             }  else if (gamepad2.a) {
                 climber_power = -1;
                 holdPosition = false;
                 climbed = false;
+                calibrate = false;
+                climberState = ClimberState.MANUAL_DOWN;
             } else if (gamepad2.dpad_up) {
                 automatic_climb = true;
                 holdPosition = false;
                 calibrate = false;
                 climbed = false;
+                climberState = ClimberState.AUTOMATIC_CLIMB;
+            } else if (gamepad2.dpad_down) {
+                automatic_climb = false;
+                climberState = ClimberState.IDLE;
             } else if (gamepad2.x) {
-                target = 180.0; 
+                target = 180.0;
                 holdPosition = false;
                 calibrate = true;
                 climbed = false;
                 climberPID.reset();
+                climberState = ClimberState.CALIBRATING;
             } else if (!gamepad2.y && climbed) {
                 last_angle = angle;
                 climbed = false;
@@ -193,14 +214,14 @@ public class FGC2025FIN extends LinearOpMode {
                 double pidOutput = climberPID.calculate(target, angle);
                 climber_power = Range.clip(pidOutput, -1.0, 1.0);
 
-    
-                if (Math.abs(target - angle) < 100.0) { 
+
+                /*if (Math.abs(target - angle) < 100.0) {
                     calibrate = false;
                     holdPosition = true;
                     last_angle = target;
                     climberPID.reset();
-                }
-            } /*else if (automatic_climb) {
+                }*/
+            } else if (automatic_climb) {
                 double currentTime = runtime.seconds();
                 double deltaTime = currentTime - lastClimberTime;
                 double deltaAngle = Math.abs(angle - lastClimberAngle);
@@ -208,24 +229,24 @@ public class FGC2025FIN extends LinearOpMode {
                 lastClimberTime = currentTime;
                 lastClimberAngle = angle;
 
-                if (deltaAngle < SMALLEST_ANGLE_CHANGE) {
-                    stallTimer += deltaTime;
+                if (deltaAngle < STALL_ANGLE_CHANGE) {
+                    Timer2 += deltaTime;
                 } else {
-                    stallTimer = 0.0; 
+                    Timer2 = 0.0;
                 }
 
-                if (stallTimer > STALL_TIME_THRESHOLD) {
-                    isStalled = true;
+                if (Timer2 > STALL_TIME_CHANGE) {
+                    Stalled = true;
                     automatic_climb = false;
                     holdPosition = true;
-                    last_angle = angle; 
+                    last_angle = angle;
                     climberPID.reset();
                     telemetry.addLine("vaithuu");
                 } else {
                     climber_power = 1.0;
                 }
-            }*/
-     
+            }
+
             // Tank Mode uses one stick to control each wheel.
             // - This requires no math, but it is hard to drive forward slowly and keep straight.
             // leftPower  = -gamepad1.left_stick_y ;
@@ -238,9 +259,7 @@ public class FGC2025FIN extends LinearOpMode {
             climber.setPower(climber_power);
 
             // Show the elapsed game time and wheel power.
-            double pidOutput = climberPID.calculate(target, angle);
-            double debug = Range.clip(pidOutput, -1.0, 1.0);
-            
+
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.addData("Motor Angle", "%.2f deg", angle);
@@ -249,7 +268,7 @@ public class FGC2025FIN extends LinearOpMode {
             telemetry.addData("Intake poewr", "(%.2f)", collect_balls1Power);
             telemetry.addData("Angle difference: ", "(%.2f)", Math.abs(last_angle-angle));
             telemetry.addData("Collectors", "(%.2f)", collect_balls1Power);
-            telemetry.addData("debug", "(%.2f)", debug);
+            //telemetry.addData("debug", "(%.2f)", debug);
             telemetry.update();
         }
     }
