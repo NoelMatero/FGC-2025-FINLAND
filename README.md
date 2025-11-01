@@ -11,7 +11,10 @@ In our case, the error represents how far the climber’s actual position is fro
   <img src="https://github.com/NoelMatero/FGC-2025-FINLAND/blob/main/pictures/Screenshot%20From%202025-10-28%2018-59-34.png" />
 </p>
 
-<center>(the standard form of the PID, which we use in the climber’s code)</center>
+<p align="center">
+  (the standard form of the PID, which we use in the climber’s code)
+  
+<p>
 
 We have also added a PID to automate the climber, allowing it to ascend the rope automatically without human input. This function is activated by pressing the D-pad up button once the rope is properly positioned. After activation, the motor begins climbing the rope on its own. However, the motor cannot continue indefinitely—once the climber reaches the top, it must stop to prevent damage.
 
