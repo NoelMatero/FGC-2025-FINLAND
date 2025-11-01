@@ -165,7 +165,7 @@ public class FGC2025FIN extends LinearOpMode {
             leftDrive.setPower(curLeftPower);
             rightDrive.setPower(curRightPower);
 
-            if (gamepad2.dpad_right) {accelerator_power = 0.5;}
+            if (gamepad2.dpad_right) {accelerator_power = 1.0;}
             collect_balls1Power = Range.clip(gamepad2.right_trigger-gamepad2.left_trigger, -1.0, 1.0);
             if (gamepad2.right_bumper) {collect_balls1Power = 0.3;}
             else if (gamepad2.left_bumper) {collect_balls1Power = -0.3;}
@@ -241,7 +241,7 @@ public class FGC2025FIN extends LinearOpMode {
                     holdPosition = true;
                     last_angle = angle;
                     climberPID.reset();
-                    telemetry.addLine("vaithuu");
+                    //telemetry.addLine("vaithuu");
                 } else {
                     climber_power = 1.0;
                 }
@@ -257,19 +257,10 @@ public class FGC2025FIN extends LinearOpMode {
             rightDrive.setPower(rightPower);
             collect_balls1.setPower(collect_balls1Power);
             climber.setPower(climber_power);
+            accelerator.setPower(accelerator_power);
 
             // Show the elapsed game time and wheel power.
 
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
-            telemetry.addData("Motor Angle", "%.2f deg", angle);
-            telemetry.addData("Lastr Angle", "(%.2f)", last_angle);
-            telemetry.addData("Climber power", "(%.2f)", climber_power);
-            telemetry.addData("Intake poewr", "(%.2f)", collect_balls1Power);
-            telemetry.addData("Angle difference: ", "(%.2f)", Math.abs(last_angle-angle));
-            telemetry.addData("Collectors", "(%.2f)", collect_balls1Power);
-            //telemetry.addData("debug", "(%.2f)", debug);
-            telemetry.update();
         }
     }
 }
