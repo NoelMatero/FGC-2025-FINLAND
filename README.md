@@ -1,2 +1,15 @@
 # FGC-2025-FINLAND
-The Java Code Made by Team Finland
+The Java Code Used by Team Finland in 2025 Panama in the First Global Challenge Robotics Tournament.
+
+## Functions of the Robot
+Programming the different functions of the robot was both interesting and fun, though sometimes challenging. Simpler features — such as the driving system and the intake logic — were straightforward to implement, but more advanced mechanisms such as the climber required extra attention and fine-tuning.
+The climber is easily the robot’s most complex component. Controlled with three buttons: The triangle/Y: moves the climber motor forward, the cross/A: moves it backwards, and pressing the square/X button calibrates the motor’s position. Calibration is important because it allows us to reset the climber to a known angle in case it misses the rope at the start of the climbing phase. Once attached, the climber can precisely adjust itself to a target angle and hold that position, supporting the robot’s weight without sliding down the rope.
+All of this is possible, thanks to our code’s Proportional–Integral–Derivative Controller (PID). A PID controller is a feedback-based system that continuously calculates an error value — the difference between the desired position and the actual measured position — and then adjusts the motor output to minimise this error over time.
+In our case, the error represents how far the climber’s actual position is from its target position on the rope. When the match ends, the climber’s motor normally stops, which would cause the robot to slide down the rope. However, the PID controller counteracts this by constantly correcting any movement, allowing the climber to hold its position. This ensures the climber moves smoothly to the desired angle and stays there securely, even while supporting the robot’s full weight after the climb.
+
+We have also added a PID to automate the climber, allowing it to ascend the rope automatically without human input. This function is activated by pressing the D-pad up button once the rope is properly positioned. After activation, the motor begins climbing the rope on its own. However, the motor cannot continue indefinitely—once the climber reaches the top, it must stop to prevent damage.
+
+To achieve this, the code must detect when the climber has reached the end of the rope. This can be done by monitoring changes in the motor’s angle. While the robot is climbing, the motor continuously turns, but once the climber reaches the top, there is—naturally—nothing left to climb. At that point, the motor’s rotation slows or stops completely, which the program detects as a signal to stop the motor safely and hold the position, with the help of the PID.
+                               
+We have also added a soft start mechanism to limit the power delivered to the wheels when the robot begins moving. This feature ensures that the robot accelerates smoothly instead of starting with too much power. We implemented the soft start system to prevent damage to the robot’s components and to keep it from tipping backwards during sudden acceleration.
+
