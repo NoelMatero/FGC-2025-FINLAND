@@ -7,7 +7,9 @@ The climber is easily the robot’s most complex component. Controlled with thre
 All of this is possible, thanks to our code’s Proportional–Integral–Derivative Controller (PID). A PID controller is a feedback-based system that continuously calculates an error value — the difference between the desired position and the actual measured position — and then adjusts the motor output to minimise this error over time.
 In our case, the error represents how far the climber’s actual position is from its target position on the rope. When the match ends, the climber’s motor normally stops, which would cause the robot to slide down the rope. However, the PID controller counteracts this by constantly correcting any movement, allowing the climber to hold its position. This ensures the climber moves smoothly to the desired angle and stays there securely, even while supporting the robot’s full weight after the climb.
 
-![](https://github.com/NoelMatero/FGC-2025-FINLAND/blob/main/pictures/Screenshot%20From%202025-10-28%2018-59-34.png)
+<p align="center">
+  <img src="https://github.com/NoelMatero/FGC-2025-FINLAND/blob/main/pictures/Screenshot%20From%202025-10-28%2018-59-34.png" />
+</p>
 
 We have also added a PID to automate the climber, allowing it to ascend the rope automatically without human input. This function is activated by pressing the D-pad up button once the rope is properly positioned. After activation, the motor begins climbing the rope on its own. However, the motor cannot continue indefinitely—once the climber reaches the top, it must stop to prevent damage.
 
