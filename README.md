@@ -1,7 +1,7 @@
 # FGC-2025-FINLAND
 The Java Code Used by Team Finland in 2025 Panama in the First Global Challenge Robotics Tournament.
 
-## Functions of the Robot
+## Functions of the Robot (From our engineering notebook)
 Programming the different functions of the robot was both interesting and fun, though sometimes challenging. Simpler features — such as the driving system and the intake logic — were straightforward to implement, but more advanced mechanisms such as the climber required extra attention and fine-tuning.
 The climber is easily the robot’s most complex component. Controlled with three buttons: The triangle/Y: moves the climber motor forward, the cross/A: moves it backwards, and pressing the square/X button calibrates the motor’s position. Calibration is important because it allows us to reset the climber to a known angle in case it misses the rope at the start of the climbing phase. Once attached, the climber can precisely adjust itself to a target angle and hold that position, supporting the robot’s weight without sliding down the rope.
 All of this is possible, thanks to our code’s Proportional–Integral–Derivative Controller (PID). A PID controller is a feedback-based system that continuously calculates an error value — the difference between the desired position and the actual measured position — and then adjusts the motor output to minimise this error over time.
